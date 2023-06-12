@@ -14,6 +14,8 @@ class CustomerInfoDB(object):
 
 
     def connect_db(self):
+        """make a connection with sql
+        """
         cred = self.config['sql_cred']
         cnx = pymysql.connect(
             host = cred['host'],
@@ -42,7 +44,18 @@ class CustomerInfoDB(object):
 
         # create customer info table
         cursor.execute("""CREATE TABLE CustInfo (
-                                    uid int, 
-                                    name varchar(15), 
-                                    address varchar(50),
+                                    uid INT IDENTITY,    # primary key, foreign key 
+                                    name VARCHAR(15) NOT NULL, 
+                                    address VARCHAR(50) NOT NULL
                                     );""")
+
+        # create customer store activity info table
+        cursor.execute("""CREATE TABLE CustStoreAct (
+                                    uid INT IDENTITY,
+                                    date_of_activity DATETIME,
+                                    entrance_time DATETIME,
+                                    exit_time DATETIME
+                                    );""")
+
+        
+        
