@@ -55,12 +55,12 @@ class SAISmartStoreDB:
 
         item_price = out[0][0]
         item_name = out[0][1]
-        return f"Price : {item_price}\nName : {item_name}"
+        return item_name, item_price
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
 
-    # this is a demo run, how you use this class to fetch item info
-    sai_ss = SAISmartStoreDB(store_name = 'store1', config_file = 'config.json')
-    print(sai_ss.fetch_item_info(aisle_name = 'aisle_128', block_name = 'A3'))
+#     # this is a demo run, how you use this class to fetch item info
+#     sai_ss = SAISmartStoreDB(store_name = 'store1', config_file = 'config.json')
+#     print(sai_ss.fetch_item_info(aisle_name = 'aisle_128', block_name = 'A3'))
