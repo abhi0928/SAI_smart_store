@@ -39,7 +39,7 @@ class SAISmartStoreDB:
         item = 'item' + block_name
 
         cursor = self.conn.cursor()
-        query = f"""SELECT i.price, i.name as price FROM stores s JOIN aisles a ON s.id = a.store_id JOIN blocks b ON a.id = b.aisle_id
+        query = f"""SELECT i.id, i.price, i.name as price FROM stores s JOIN aisles a ON s.id = a.store_id JOIN blocks b ON a.id = b.aisle_id
         JOIN sections sc ON b.id = sc.block_id
         JOIN items i ON sc.id = i.section_id
         WHERE i.name = '{item}'
@@ -53,9 +53,10 @@ class SAISmartStoreDB:
 
         out = cursor.fetchall()
 
-        item_price = out[0][0]
-        item_name = out[0][1]
-        return item_name, item_price
+        item_id = out[0][0]
+        item_price = out[0][1]
+        item_name = out[0][2]
+        return item_id, item_name, item_price
 
 
 # if __name__ == "__main__":
@@ -63,4 +64,4 @@ class SAISmartStoreDB:
 
 #     # this is a demo run, how you use this class to fetch item info
 #     sai_ss = SAISmartStoreDB(store_name = 'store1', config_file = 'config.json')
-#     print(sai_ss.fetch_item_info(aisle_name = 'aisle_128', block_name = 'A3'))
+#     print(sai_ss.fetch_item_info(aisle_name = 'aisle_120', block_name = 'C7'))
