@@ -6,20 +6,18 @@ import pickle
 import csv
 from fetch_smart_store_info import SAISmartStoreDB
 from transactions import get_transaction_id, add_transactions
-# from monitor import MonitorWindow
-# from PyQt5.QtWidgets import QApplication, QMainWindow
-# import sys
-
-
+import argparse
 
 class MonitorCust:
 
-    def __init__(self, store_name : str, aisle_name: str, regions_file : str, db_config_file : str) -> None:
+    def __init__(self, store_name : str, aisle_name: str, stream : str, regions_file : str = '../archway_aisle_map.pkl',
+                                 db_config_file : str = 'config.json') -> None:
         self.store_name = store_name
         self.aisle = aisle_name
         self.aisle_name = f'aisle_{aisle_name}'
         self.regions = pickle.load(open(regions_file, 'rb'))
         self.smart_store_db = SAISmartStoreDB(store_name = self.store_name, config_file = db_config_file)
+        self.stream = stream
         self.prod_list = {}
         self.x = None
         self.y = None
@@ -132,8 +130,8 @@ class MonitorCust:
         return (False, None)
 
                     
-    def run(self, stream):
-        cap = cv2.VideoCapture(stream)
+    def run(self):
+        cap = cv2.VideoCapture(self.stream)
 
         if (cap.isOpened() == False):
             print("Error opening video file")
@@ -147,7 +145,6 @@ class MonitorCust:
                 self.show_info(frame = frame_resize)
 
                 cv2.setMouseCallback('image', self.click_event)
-                # process on frame
 
                 if cv2.waitKey(25) & 0xFF == ord('q'):
                     break
@@ -163,6 +160,18 @@ class MonitorCust:
 
 if __name__=="__main__":
 
-    monitor = MonitorCust(store_name = 'store1', aisle_name = 129, regions_file = '../archway_aisle_map.pkl',
-                          db_config_file = 'config.json')
-    monitor.run('../archway/129.mp4')
+    parser = argparse.ArgumentParser(description = "SAI smart store project demo")
+
+    parser.add_argument('store-name', metavar = 'st', type = str, nargs = '+', help = 'name of the store')
+    parser.add_argument('aisle', metavar = 'a', type = int, nargs = '+', help = 'aisle which needs to monitor')
+    parser.add_argument('region-file', metavar = 'r', type = str, nargs = '+', default = 'archway_aisle_map.pkl', help = 'pickle file contain regions')
+    parser.add_argument('db-config', metavar = 'c', type = str, nargs = '+', default = 'config.json', help = 'database config file')
+    parser.add_argument('stream', metavar = 's', type = str, nargs = '+', help = 'path of stream or rtsp url')
+
+    args = parser.parse_args()
+
+    # monitor = MonitorCust(store_name = 'store1', aisle_name = 129, stream = '../archway/129.mp4',
+    #                                    regions_file = '../archway_aisle_map.pkl', db_config_file = 'config.json')
+    
+    monitor = MonitorCust(store_name = args['store_name'])
+    monitor.run()
