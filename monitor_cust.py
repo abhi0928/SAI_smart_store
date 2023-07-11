@@ -7,6 +7,8 @@ import csv
 from fetch_smart_store_info import SAISmartStoreDB
 from transactions import get_transaction_id, add_transactions
 import argparse
+import os
+import subprocess
 
 class MonitorCust:
 
@@ -43,6 +45,15 @@ class MonitorCust:
             writer.writerow(['Total', '', total_products, self.total_bill])
         print("Invoice generated")
 
+    def get_item_id(self):
+        block = 'block' + self.current_aisle[0]
+        section = 'section' + self.current_aisle
+        item_name = 'item' + self.current_aisle
+        cmd = f"curl --location --request GET 'http://51.132.13.113:8001/get_item_id?item={item_name}&section={section}&block={block}&aisle={self.aisle_name}&store={self.store_name}'"
+        print("**************************")
+        item_id = os.system(cmd)
+        print("**************************")
+        return item_id, item_name
 
     def show_bill_info(self, frame, font):
         try:
@@ -89,7 +100,9 @@ class MonitorCust:
             self.y = y
             status, self.current_aisle = self.check_intersection(x, y, self.regions[self.aisle])
             if status:
-                self.current_item_id, self.current_item_name, self.current_item_price = self.smart_store_db.fetch_item_info(aisle_name = self.aisle_name, block_name = self.current_aisle)
+                # self.current_item_id, self.current_item_name, self.current_item_price = self.smart_store_db.fetch_item_info(aisle_name = self.aisle_name, 
+                #                                                                                                 block_name = self.current_aisle)
+                self.current_item_id, self.current_item_name = self.get_item_id()
                 if self.current_item_name not in self.prod_list.keys():
                     self.prod_list[self.current_item_name] = [self.current_item_price, 1, self.current_item_price, self.current_item_id]
                 else:
