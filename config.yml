@@ -1,9 +1,0 @@
-
-sql_cred:
-  # credentials for sql 
-  user: "root"
-  password: "your_sql_password"
-  database: "name_of_database"
-  dbhost: "localhost"
-  
-

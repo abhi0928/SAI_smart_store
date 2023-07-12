@@ -2,24 +2,29 @@ import numpy as np
 import cv2
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+import requests
 import pickle
 import csv
 from fetch_smart_store_info import SAISmartStoreDB
 from transactions import get_transaction_id, add_transactions
 import argparse
-import os
-import subprocess
+import ast
+from typing import List
 
 class MonitorCust:
 
-    def __init__(self, store_name : str, aisle_name: str, stream : str, regions_file : str = '../archway_aisle_map.pkl',
-                                 db_config_file : str = 'config.json') -> None:
+    def __init__(self, store_name : str, aisle_name : str, transaction_id : int, stream : str = None, regions_file : str = 'archway_aisle_map.pkl',
+                                 db_config_file : str = 'config.json', rtsp : bool = False) -> None:
         self.store_name = store_name
         self.aisle = aisle_name
+        self.transaction_id = transaction_id
         self.aisle_name = f'aisle_{aisle_name}'
         self.regions = pickle.load(open(regions_file, 'rb'))
-        self.smart_store_db = SAISmartStoreDB(store_name = self.store_name, config_file = db_config_file)
-        self.stream = stream
+        # self.smart_store_db = SAISmartStoreDB(store_name = self.store_name, config_file = db_config_file)
+        if rtsp:
+            self.stream = f'rtsp://admin:Admin123@192.168.1.{self.aisle}:554/Streaming/Channels/101'
+        else:
+            self.stream = stream
         self.prod_list = {}
         self.x = None
         self.y = None
@@ -28,12 +33,13 @@ class MonitorCust:
         self.current_item_price = None
         self.current_item_name = None
         self.total_bill = 0
+        self.transaction_id 
 
     def generate_invoice(self):
-        tran_id = get_transaction_id()
+        # tran_id = get_transaction_id()
 
         for prod, info in self.prod_list.items():
-            add_transactions(tran_id, info[3], info[1])
+            add_transactions(self.transaction_id, info[3], info[1])
 
         total_products = sum([i[1] for i in self.prod_list.values()])
         with open("demo_invoice.csv", 'w') as csvfile:
@@ -45,15 +51,16 @@ class MonitorCust:
             writer.writerow(['Total', '', total_products, self.total_bill])
         print("Invoice generated")
 
-    def get_item_id(self):
+    def get_item_info(self):
         block = 'block' + self.current_aisle[0]
         section = 'section' + self.current_aisle
         item_name = 'item' + self.current_aisle
-        cmd = f"curl --location --request GET 'http://51.132.13.113:8001/get_item_id?item={item_name}&section={section}&block={block}&aisle={self.aisle_name}&store={self.store_name}'"
-        print("**************************")
-        item_id = os.system(cmd)
-        print("**************************")
-        return item_id, item_name
+        response = requests.get(
+                f'http://51.132.13.113:8001/get_item_id?section={section}&block={block}&aisle={self.aisle_name}&store={self.store_name}',
+                )
+
+        res = ast.literal_eval(response.text)
+        return res[0]["item_id"], item_name, res[0]["price"]
 
     def show_bill_info(self, frame, font):
         try:
@@ -98,11 +105,12 @@ class MonitorCust:
             # print(x, ' ', y)
             self.x = x
             self.y = y
-            status, self.current_aisle = self.check_intersection(x, y, self.regions[self.aisle])
+            print(self.aisle)
+            status, self.current_aisle = self.check_intersection(x, y, self.regions[int(self.aisle)])
             if status:
-                # self.current_item_id, self.current_item_name, self.current_item_price = self.smart_store_db.fetch_item_info(aisle_name = self.aisle_name, 
-                #                                                                                                 block_name = self.current_aisle)
-                self.current_item_id, self.current_item_name = self.get_item_id()
+                # self.current_item_id, self.current_item_name, self.current_item_price = self.smart_store_db.fetch_item_info(aisle_name = self.aisle_name,
+                #                                                                                          block_name = self.current_aisle)
+                self.current_item_id, self.current_item_name, self.current_item_price = self.get_item_info()
                 if self.current_item_name not in self.prod_list.keys():
                     self.prod_list[self.current_item_name] = [self.current_item_price, 1, self.current_item_price, self.current_item_id]
                 else:
@@ -169,22 +177,20 @@ class MonitorCust:
         self.generate_invoice()
 
 
-
-
 if __name__=="__main__":
 
     parser = argparse.ArgumentParser(description = "SAI smart store project demo")
 
-    parser.add_argument('store-name', metavar = 'st', type = str, nargs = '+', help = 'name of the store')
-    parser.add_argument('aisle', metavar = 'a', type = int, nargs = '+', help = 'aisle which needs to monitor')
-    parser.add_argument('region-file', metavar = 'r', type = str, nargs = '+', default = 'archway_aisle_map.pkl', help = 'pickle file contain regions')
-    parser.add_argument('db-config', metavar = 'c', type = str, nargs = '+', default = 'config.json', help = 'database config file')
-    parser.add_argument('stream', metavar = 's', type = str, nargs = '+', help = 'path of stream or rtsp url')
+    parser.add_argument("-sn", "--store", required = True, help = 'name of the store')
+    parser.add_argument("-a", "--aisle", required = True, help = 'aisle which needs to monitor')
+    parser.add_argument("-r", "--regions", default = 'archway_aisle_map.pkl', help = 'pickle file contain regions')
+    parser.add_argument("-db", "--dbconfig", default = 'config.json', help = 'database config file')
+    parser.add_argument("-s", "--stream", default = None, help = 'path of stream')
+    parser.add_argument("-rt", "--rtsp", help = "url of rtsp stream")
+    parser.add_argument("-t", "--tranid", help = "transaction id")
 
-    args = parser.parse_args()
-
-    # monitor = MonitorCust(store_name = 'store1', aisle_name = 129, stream = '../archway/129.mp4',
-    #                                    regions_file = '../archway_aisle_map.pkl', db_config_file = 'config.json')
+    args = vars(parser.parse_args())
     
-    monitor = MonitorCust(store_name = args['store_name'])
+    monitor = MonitorCust(store_name = args["store"], aisle_name = args["aisle"], transaction_id = args["tranid"], stream = args["stream"],
+                            regions_file = args["regions"], db_config_file = args["dbconfig"], rtsp = args["rtsp"])
     monitor.run()
