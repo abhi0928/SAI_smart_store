@@ -5,8 +5,9 @@ from shapely.geometry.polygon import Polygon
 import requests
 import pickle
 import csv
-from fetch_smart_store_info import SAISmartStoreDB
+# from fetch_smart_store_info import SAISmartStoreDB
 from transactions import get_transaction_id, add_transactions
+from test_checkout import CheckoutUpdate
 import argparse
 import ast
 from typing import List
@@ -33,7 +34,7 @@ class MonitorCust:
         self.current_item_price = None
         self.current_item_name = None
         self.total_bill = 0
-        self.transaction_id 
+        self.checkout_status = False
 
     def generate_invoice(self):
         # tran_id = get_transaction_id()
@@ -54,19 +55,26 @@ class MonitorCust:
     def get_item_info(self):
         block = 'block' + self.current_aisle[0]
         section = 'section' + self.current_aisle
-        item_name = 'item' + self.current_aisle
+        params = {
+            "section" : section,
+            "block" : block,
+            "aisle" : self.aisle_name,
+            "store" : self.store_name
+        }
+        
         response = requests.get(
-                f'http://51.132.13.113:8001/get_item_id?section={section}&block={block}&aisle={self.aisle_name}&store={self.store_name}',
-                )
+                'http://51.132.13.113:8001/get_item_id',
+                params = params
+        )
 
         res = ast.literal_eval(response.text)
-        return res[0]["item_id"], item_name, res[0]["price"]
+        return res[0]["item_id"], res[0]["name"], res[0]["price"]
 
     def show_bill_info(self, frame, font):
         try:
            # current item name
-            cv2.rectangle(frame, (500, 670), (1000, 720), (91, 91, 91), -1)
-            cv2.putText(frame, f"count/total_price : {self.prod_list[self.current_item_name][0]}/{self.prod_list[self.current_item_name][1]}", (510, 700),
+            cv2.rectangle(frame, (600, 670), (1050, 720), (91, 91, 91), -1)
+            cv2.putText(frame, f"count/total_price : {self.prod_list[self.current_item_name][0]}/{self.prod_list[self.current_item_name][1]}", (610, 700),
                         font, 1, (44, 250, 234), 2)
 
             cv2.rectangle(frame, (1000, 670), (1250, 720), (128, 128, 128), -1)
@@ -88,6 +96,10 @@ class MonitorCust:
 
     def show_info(self, frame):
         font = cv2.FONT_HERSHEY_SIMPLEX
+        if self.checkout_status:
+            cv2.rectangle(frame, (400, 670), (600, 720), (91, 91, 91), -1)
+            cv2.putText(frame, f"CHECKOUT", (410, 700),
+                        font, 1, (0, 0, 255), 2)
         if self.current_aisle != None:
             cv2.rectangle(frame, (self.x - 10, self.y - 30), (self.x + 250, self.y + 35), (128, 128, 128), -1)
             cv2.putText(frame, f'Item: {self.current_item_name}', (self.x, self.y), font, 
@@ -105,7 +117,6 @@ class MonitorCust:
             # print(x, ' ', y)
             self.x = x
             self.y = y
-            print(self.aisle)
             status, self.current_aisle = self.check_intersection(x, y, self.regions[int(self.aisle)])
             if status:
                 # self.current_item_id, self.current_item_name, self.current_item_price = self.smart_store_db.fetch_item_info(aisle_name = self.aisle_name,
@@ -141,6 +152,8 @@ class MonitorCust:
                 self.total_bill -= self.current_item_price
             elif polygon3.contains(point):
                 self.generate_invoice()
+                import sys
+                sys.exit(1)
             
         for region, aisle in zip(regions['polygon'].values(), regions['stream']['crop_labels']):
             if aisle == 'Aisle':
@@ -157,10 +170,15 @@ class MonitorCust:
         if (cap.isOpened() == False):
             print("Error opening video file")
 
+        cnt = 0
         while cap.isOpened():
             ret, frame = cap.read()
             if ret:
                 frame_resize = cv2.resize(frame, (1280, 720))
+                if cnt % 100 == 0:
+                    checkout = pickle.load(open('checkout_status.pkl', 'rb'))
+                    if checkout:
+                        self.checkout_status = True
 
                 # cv2.imshow('image', frame_resize)
                 self.show_info(frame = frame_resize)
@@ -179,6 +197,8 @@ class MonitorCust:
 
 if __name__=="__main__":
 
+    import multiprocessing
+
     parser = argparse.ArgumentParser(description = "SAI smart store project demo")
 
     parser.add_argument("-sn", "--store", required = True, help = 'name of the store')
@@ -193,4 +213,6 @@ if __name__=="__main__":
     
     monitor = MonitorCust(store_name = args["store"], aisle_name = args["aisle"], transaction_id = args["tranid"], stream = args["stream"],
                             regions_file = args["regions"], db_config_file = args["dbconfig"], rtsp = args["rtsp"])
+    
     monitor.run()
+    

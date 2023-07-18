@@ -1,13 +1,13 @@
 from typing import List
 import os
 import argparse
-from transactions import get_transaction_id, add_transactions
+from transactions import get_transaction_id
 from subprocess import Popen
 
 
-def smart_store_monitor(store_name : str, aisles : List, streams : List, regions_file : str = 'archway_aisle_map.pkl', rtsp : bool = False):
-    
+def smart_store_monitor(store_name : str, aisles : List, streams : List = None, regions_file : str = 'archway_aisle_map.pkl', rtsp : bool = False):
     tran_id = get_transaction_id()
+    print("transaction id : ", tran_id)
     command = []
 
     if not rtsp:
@@ -15,20 +15,20 @@ def smart_store_monitor(store_name : str, aisles : List, streams : List, regions
             return "aisles and streams length must be same"
     
         for aisle, stream in zip(aisles, streams):
-            # os.system(f"python monitor_cust.py --store '{store_name}' --aisle {aisle} --stream '{stream}' --tranid {tran_id}")
-            # command += f"python monitor_cust.py --store '{store_name}' --aisle {aisle} --stream '{stream}' --tranid {tran_id} &"
-            command.append(f"python monitor_cust.py --store '{store_name}' --aisle {aisle} --stream '{stream}' --tranid {tran_id}")
+        
+            command.append(f"python monitor_cust.py --store {store_name} --aisle {aisle} --stream '{stream}' --tranid {tran_id}")
 
     else:
         for aisle in aisles:
-            command += f"python monitor_cust.py --store '{store_name}' --aisle {aisle} --tranid {tran_id} --rtsp {rtsp} &"
-
-    # os.system(command)
-  
+            command.append(f"python monitor_cust.py --store {store_name} --aisle {aisle} --tranid {tran_id} --rtsp {rtsp}")
+    
+    command.insert(0, "python test_checkout.py")
 
     procs = [ Popen(i, shell = True) for i in command ]
     for p in procs:
         p.wait()
+    import sys
+    sys.exit(1)
 
 
 
@@ -42,5 +42,7 @@ if __name__ == "__main__":
     # parser.add_argument("-rt", "--rtsp", help = "url of rtsp stream")
 
     # args = vars(parser.parse_args())
+
+    # smart_store_monitor(store_name = 'store1', aisles = [128, 126], rtsp = True)
 
     smart_store_monitor(store_name = 'store1', aisles = [128, 126], streams = ['../archway/128.mp4', '../archway/126.mp4'])
