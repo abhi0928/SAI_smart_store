@@ -6,7 +6,7 @@ import requests
 import pickle
 import csv
 # from fetch_smart_store_info import SAISmartStoreDB
-from transactions import get_transaction_id, add_transactions
+from transactions import get_transaction_id, add_transactions, update_transaction_validation_status
 from test_checkout import CheckoutUpdate
 import argparse
 import ast
@@ -35,6 +35,7 @@ class MonitorCust:
         self.current_item_name = None
         self.total_bill = 0
         self.checkout_status = False
+        self.submit_check = False
 
     def generate_invoice(self):
         # tran_id = get_transaction_id()
@@ -50,6 +51,7 @@ class MonitorCust:
                 writer.writerow([prod, info[0], info[1], info[2]])
             writer.writerow(['', '', '', ''])
             writer.writerow(['Total', '', total_products, self.total_bill])
+        update_transaction_validation_status(self.transaction_id)
         print("Invoice generated")
 
     def get_item_info(self):
@@ -68,7 +70,8 @@ class MonitorCust:
         )
 
         res = ast.literal_eval(response.text)
-        return res[0]["item_id"], res[0]["name"], res[0]["price"]
+        item_name = res[0]["name"].split("-")[1]
+        return res[0]["item_id"], item_name, res[0]["price"]
 
     def show_bill_info(self, frame, font):
         try:
@@ -152,8 +155,7 @@ class MonitorCust:
                 self.total_bill -= self.current_item_price
             elif polygon3.contains(point):
                 self.generate_invoice()
-                import sys
-                sys.exit(1)
+                self.submit_check = True
             
         for region, aisle in zip(regions['polygon'].values(), regions['stream']['crop_labels']):
             if aisle == 'Aisle':
@@ -175,7 +177,8 @@ class MonitorCust:
             ret, frame = cap.read()
             if ret:
                 frame_resize = cv2.resize(frame, (1280, 720))
-                if cnt % 100 == 0:
+
+                if cnt % 1000 == 0:
                     checkout = pickle.load(open('checkout_status.pkl', 'rb'))
                     if checkout:
                         self.checkout_status = True
@@ -196,8 +199,6 @@ class MonitorCust:
 
 
 if __name__=="__main__":
-
-    import multiprocessing
 
     parser = argparse.ArgumentParser(description = "SAI smart store project demo")
 
