@@ -1,0 +1,10 @@
+{	
+  "ssh_client" : "ssh -L 3307:localhost:3306 bitnami@51.132.13.113",
+  "ssh_password" : "Saigroup@987",
+  "user": "root",
+  "password" : "2ZTJ2KHS0EMq",
+  "database": "samart_store",
+  "dbhost" : "127.0.0.1",
+  "port" : 3307,
+  "host" : "51.132.13.113"
+}	
