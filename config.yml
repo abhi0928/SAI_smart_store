@@ -1,0 +1,40 @@
+log_level: 'DEBUG'
+log_path: 'logs'
+ffmpeg_path:  'ffmpeg'
+output_folder: 'Shoppers'
+tmp_folder: 'tmp'
+display_result:  True
+end_processing_time: '20:00:00'
+
+input_streams:
+  # Possible values 'stream', 'file'
+  mode: 'file'
+  queue_size: 150
+  # not effective for mode=file
+  retry_limit: 30
+  frame_size: [1280, 720, 3]
+  # Possible values: either a txt file path or dict
+  sources:
+    - camera_id: 128
+      source: '/Users/attiqrehman/Downloads/TransferNow-20230703EhMklO1i/128.mp4' #'/Users/attiqrehman/sai/data/New folder/interaction1.mp4'
+      crop: false
+      crop_labels:
+        - 'B1_C1'
+        - 'B1_C2'
+        - 'B1_C3'
+        - 'B1_C4'
+        - 'B2_C1'
+        - 'B2_C2'
+        - 'B2_C3'
+        - 'B2_C4'
+        - 'B3_C1'
+        - 'B3_C2'
+        - 'B3_C3'
+        - 'B3_C4'
+    # - camera_id: 38
+    #   source: 'E:\\Projects\\SAI\\WIWO\\Samples\\10.mp4'
+    #   crop: false
+    #   crop_labels:
+    #     - 'A'
+    #     - 'B'
+    #     - 'C'
