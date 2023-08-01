@@ -5,7 +5,8 @@ from transactions import get_transaction_id, update_transaction_validation_statu
 from subprocess import Popen
 
 
-def smart_store_monitor(store_name : str, aisles : List, streams : List = None, regions_file : str = 'archway_aisle_map.pkl', rtsp : bool = False):
+def smart_store_monitor(store_name : str, aisles : List, streams : List = None, 
+                        regions_file : str = 'archway_aisle_map.pkl', rtsp : bool = False):
     tran_id = get_transaction_id()
     print("transaction id : ", tran_id)
     command = []
