@@ -30,7 +30,6 @@ input_streams:
         - 'B3_C1'
         - 'B3_C2'
         - 'B3_C3'
-        - 'B3_C4'
     # - camera_id: 38
     #   source: 'E:\\Projects\\SAI\\WIWO\\Samples\\10.mp4'
     #   crop: false
