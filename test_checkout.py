@@ -12,6 +12,9 @@ class CheckoutUpdate:
         self.status_file = open('checkout_status.pkl', 'wb')
         pickle.dump({}, self.status_file)
         self.status_file.close()
+        self.validation_file = open('validation_status.pkl', 'wb')
+        pickle.dump({}, self.validation_file)
+        self.validation_file.close()
 
 
     def check_response_status(self):
@@ -35,18 +38,6 @@ class CheckoutUpdate:
         else:
             print("Failed to establish SSE connection")
 
-
-
-# from sseclient import SSEClient
-# import json
-# url="http://51.132.13.113:8001/monitor_checkout_transactions"
-
-# messages = SSEClient(url,proxies=proxy)
-# for msg in messages:
-#     print(msg.event)
-#     if msg.event=="message":
-#         data=json.loads(msg.data)
-#         print(data)
 
 if __name__ == "__main__":
 

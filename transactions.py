@@ -4,7 +4,7 @@ import json
 import uuid
 from datetime import datetime
 import ast
-import json
+import pickle
 
 def get_transaction_id():
     transaction_id = str(uuid.uuid4()).split('-')[0]
@@ -40,8 +40,6 @@ def add_transactions(tran_id, item_id, quantity):
     response = requests.request("POST", url, headers = headers, data = payload)
     print(f"item {item_id} successfully added")
 
-
-
 def update_transaction_validation_status(tran_id):
     url = f"http://51.132.13.113:8001/update_transaction_validation_status?transaction_id={tran_id}"
     payload = json.dumps({})
@@ -53,4 +51,7 @@ def update_transaction_validation_status(tran_id):
 
     print("Transaction Validation successfull")
     print(response.text)
+
+
+
 

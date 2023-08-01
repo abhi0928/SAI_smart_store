@@ -1,7 +1,7 @@
 from typing import List
 import os
 import argparse
-from transactions import get_transaction_id
+from transactions import get_transaction_id, update_transaction_validation_status
 from subprocess import Popen
 
 
@@ -27,8 +27,7 @@ def smart_store_monitor(store_name : str, aisles : List, streams : List = None, 
     procs = [ Popen(i, shell = True) for i in command ]
     for p in procs:
         p.wait()
-    import sys
-    sys.exit(1)
+    update_transaction_validation_status(tran_id = tran_id)
 
 
 
@@ -43,6 +42,5 @@ if __name__ == "__main__":
 
     # args = vars(parser.parse_args())
 
-    # smart_store_monitor(store_name = 'store1', aisles = [128, 126], rtsp = True)
+    smart_store_monitor(store_name = 'store1', aisles = [126, 120, 128], rtsp = True)
 
-    smart_store_monitor(store_name = 'store1', aisles = [128, 126], streams = ['../archway/128.mp4', '../archway/126.mp4'])
