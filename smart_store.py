@@ -45,3 +45,4 @@ if __name__ == "__main__":
 
     smart_store_monitor(store_name = 'store1', aisles = [126, 120, 128], rtsp = True)
 
+
