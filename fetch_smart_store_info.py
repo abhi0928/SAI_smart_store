@@ -42,8 +42,7 @@ class SAISmartStoreDB:
         query = f"""SELECT i.id, i.price, i.name as price FROM stores s JOIN aisles a ON s.id = a.store_id JOIN blocks b ON a.id = b.aisle_id
         JOIN sections sc ON b.id = sc.block_id
         JOIN items i ON sc.id = i.section_id
-        WHERE i.name = '{item}'
-        AND sc.name = '{section}'
+        WHERE sc.name = '{section}'
         AND b.name = '{block}'
         AND a.name = '{aisle_name}'
         AND s.name = '{self.store_name}';
